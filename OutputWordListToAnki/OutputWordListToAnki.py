@@ -48,16 +48,35 @@ def en_to_zh_iciba(word):
     for item in expresses:
         express = item.text + express
     express = re.sub('\s','',express)
+    return word + '\n' + express + '\n'
+def en_to_zh_youdict(word):
+    url = "http://www.youdict.com/w/" + word
+    responce = urllib.request.urlopen(url)
+    html = responce.read().decode("utf-8")
+    soup = BeautifulSoup(html, 'lxml')
+    returnString = ""
+    #目标词汇
+    word = soup.find('h3', id="yd-word").text
+    word = re.sub('\s','',word)#将string中的所有空白字符删除
+    #释义:
+    express = ""
+    expresses = soup.find(id='yd-word-meaning')
+    for item in expresses:
+        express = item.text + express
+    express = re.sub('\s','',express)
     #例句
-    #englishExample = soup.find_all('h1', class_='word-root family-chinese size-english')
+    englishExamples = soup.find(id='yd-liju').text
+    deleteNumber = englishExamples.index("来自")#只需要第一个例句
+    englishExamples = englishExamples[4:deleteNumber]
+    #词根    
+    root = soup.find(id='yd-ciyuan').text
+    #returnString = returnString + word + "\n" + express
     #chineseExample = ""
     #chineseExamples = soup.find('div', class_ = 'sen_cn')
     #for item in chineseExamples:
     #    chineseExample = chineseExample + item.text
-    #合并
-    #returnString = word + '\n' + express + '\n' + englishExample + chineseExample + '\n'
-    #return returnString
-    return word + '\n' + express + '\n'
+    #return word + '\n' + express + 
+    return word + '\n' + express + '\n' + englishExamples + '\n' + root + '\n'
 #点击导出按钮之后
 def outputCommand():
     inputStr = displayResultWidget.get("0.0", "end")  
@@ -74,9 +93,12 @@ def sourceChoiceCommand():
     if (sourceChoiceStatus.get() == 1):
         displayMessageWidget.config(text = "select bing")
         selectDict = 1
-    else:
+    elif (sourceChoiceStatus.get() == 2):
         displayMessageWidget.config(text = "select iciba")
         selectDict = 2
+    elif (sourceChoiceStatus.get() == 3):
+        displayMessageWidget.config(text = "select youdict")
+        selectDict = 3
 selectDict = 0     
 window = tk.Tk()
 sourceChoiceStatus = tk.IntVar()
@@ -90,6 +112,8 @@ def confirmButtonCommand():
         displayResultWidget.insert("end", en_to_zh_bing(temp))
     elif(selectDict == 2):
         displayResultWidget.insert("end", en_to_zh_iciba(temp))
+    elif(selectDict == 3):
+        displayResultWidget.insert("end", en_to_zh_youdict(temp))
     displayResultWidget.insert("end", "-----------------\n")
     displayMessageWidget.config(text = "已添加新单词")
 #选择词典控件
@@ -99,10 +123,16 @@ sourceChoiceWidget1 = tk.Radiobutton(window, text='bing',
 sourceChoiceWidget2 = tk.Radiobutton(window, text='iciba',
                                      variable=sourceChoiceStatus, value=2,
                                      command=sourceChoiceCommand)
-sourceChoiceWidget1.select()
+sourceChoiceWidget3 = tk.Radiobutton(window, text='youdict',
+                                     variable=sourceChoiceStatus, value=3,
+                                     command=sourceChoiceCommand)
+sourceChoiceWidget3.select()
 sourceChoiceWidget1.place(x=20, y=18, anchor='nw')
 sourceChoiceWidget2.place(x=80, y=18, anchor='nw')
+sourceChoiceWidget3.place(x=140, y=18, anchor='nw')
 #输入控件
+wordLable = tk.Label(text = "word:")
+wordLable.pack()
 wordEntryWidget = tk.Entry(window)
 wordEntryWidget.pack()
 #单词确认按钮
@@ -125,9 +155,6 @@ displayMessageWidget.pack()
 #各种label:
 sourceChoiceLable = tk.Label(text = "choice source :")
 sourceChoiceLable.place(x=20, y=2, anchor='nw')
-
-wordLable = tk.Label(text = "word:")
-wordLable.pack()
 #开始执行
 sourceChoiceCommand()#初始化选择的默认状态
 window.mainloop()
