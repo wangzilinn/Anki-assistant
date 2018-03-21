@@ -56,8 +56,14 @@ def en_to_zh_youdict(word):
     soup = BeautifulSoup(html, 'lxml')
     returnString = ""
     #目标词汇
-    word = soup.find('h3', id="yd-word").text
-    word = re.sub('\s','',word)#将string中的所有空白字符删除
+    try:
+        word = soup.find('h3', id="yd-word").text
+        word = re.sub('\s','',word)#将string中的所有空白字符删除
+    except AttributeError:
+        return ""
+    #在哪些词汇表中
+    vocabulary = soup.find(style="margin-bottom:6px;").text
+    vocabularyLable.config(text = vocabulary)
     #释义:
     express = ""
     expresses = soup.find(id='yd-word-meaning')
@@ -68,14 +74,16 @@ def en_to_zh_youdict(word):
     englishExamples = soup.find(id='yd-liju').text
     deleteNumber = englishExamples.index("来自")#只需要第一个例句
     englishExamples = englishExamples[4:deleteNumber]
-    #词根    
-    root = soup.find(id='yd-ciyuan').text
-    #returnString = returnString + word + "\n" + express
-    #chineseExample = ""
-    #chineseExamples = soup.find('div', class_ = 'sen_cn')
-    #for item in chineseExamples:
-    #    chineseExample = chineseExample + item.text
-    #return word + '\n' + express + 
+    #词根 
+    root = ""
+    try:  
+        ex = 0#除去第一个元素
+        for item in soup.find(id='yd-ciyuan').contents:
+            if (ex != 0):
+                root = root + item.text
+            ex = ex + 1
+    except AttributeError:
+        root = "未找到中文词源"
     return word + '\n' + express + '\n' + englishExamples + '\n' + root + '\n'
 #点击导出按钮之后
 def outputCommand():
@@ -108,6 +116,7 @@ def confirmButtonCommand():
     temp = wordEntryWidget.get()
     wordEntryWidget.delete(0, len(temp))
     global selectDict
+    #判断是否在考研词汇中
     if (selectDict == 1):
         displayResultWidget.insert("end", en_to_zh_bing(temp))
     elif(selectDict == 2):
@@ -155,6 +164,8 @@ displayMessageWidget.pack()
 #各种label:
 sourceChoiceLable = tk.Label(text = "choice source :")
 sourceChoiceLable.place(x=20, y=2, anchor='nw')
+vocabularyLable = tk.Label()
+vocabularyLable.place(x=350, y=2, anchor='nw')
 #开始执行
 sourceChoiceCommand()#初始化选择的默认状态
 window.mainloop()
