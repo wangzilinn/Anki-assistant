@@ -143,15 +143,16 @@ def display_input_interface_command():
     if activate_input_youdao_word_book_feature:
         activate_input_youdao_word_book_feature = False
         input_youdao_word_book_button.config(text="Off")
-        youdao_word_list_widget.place_forget()  # 隐藏单词列表控件
-        import_word_button.place_forget()  # 隐藏确认导入按钮
+        youdao_word_list_widget.grid_forget()  # 隐藏单词列表控件
+        import_word_button.grid_forget()  # 隐藏确认导入按钮
+        # import_word_button.place_forget()  # 隐藏确认导入按钮
         window.geometry("445x500")  # 恢复原来的窗口大小
     else:
         activate_input_youdao_word_book_feature = True
         input_youdao_word_book_button.config(text="On")
         window.geometry("605x500")  # 扩大窗口以显示列表控件
-        youdao_word_list_widget.place(x=450, y=80, anchor='nw')  # 放置列表控件
-        import_word_button.place(x=480, y=400, anchor='nw')  # 放置确认导入按钮
+        youdao_word_list_widget.grid(row=5, column=6)  # 放置列表控件
+        import_word_button.grid(row=12, column=6)  # 放置确认导入按钮
         if youdao_word_list_widget.size() == 0:  # 当原来列表不为空时再导入文件
             try:
                 file = tk.filedialog.askopenfilename(filetypes=[("单词本文件", ".txt")])
@@ -215,50 +216,55 @@ source_choice_widget3 = tk.Radiobutton(window, text='youdict',
                                        variable=source_choice_status, value=3,
                                        command=source_choice_command)
 source_choice_widget3.select()
-source_choice_widget1.place(x=20, y=18, anchor='nw')
-source_choice_widget2.place(x=80, y=18, anchor='nw')
-source_choice_widget3.place(x=140, y=18, anchor='nw')
+source_choice_widget1.grid(row=1, column=0)
+source_choice_widget2.grid(row=1, column=1)
+source_choice_widget3.grid(row=1, column=2)
 # 输入控件
 word_label = tk.Label(text="word:")
-word_label.place(x=270, y=1, anchor='nw')
+word_label.grid(row=0, column=3)
 word_entry_widget = tk.Entry(window)
 word_entry_widget.bind('<Enter>', confirm_button_command)
-word_entry_widget.place(x=230, y=20, anchor='nw')
+word_entry_widget.grid(row=1, column=3)
 # 单词确认按钮
 confirm_button = tk.Button(window,
                            text="confirm",
                            command=confirm_button_command
                            )
-confirm_button.place(x=360, y=18, anchor='nw')
+confirm_button.grid(row=1, column=4)
 # 显示结果控件
 display_result_widget = tk.Text(window, width=60, height=24)
-display_result_widget.place(x=10, y=80, anchor='nw')
+display_result_widget.grid(row=5, column=0, columnspan=6, rowspan=6, padx=10)
 # 导出确认按钮
 output_control_button = tk.Button(window,
                                   text="output",
                                   command=output_command)
-output_control_button.place(x=10, y=405, anchor='nw')
+output_control_button.grid(row=12, column=2, pady=10)
 # 显示状态
 display_message_widget = tk.Label(window,
                                     text="未开始")
-display_message_widget.place(x=10, y=440, anchor='nw')
+display_message_widget.grid(row=13, column=0, padx=10, columnspan=6, rowspan=2, sticky=W)
 # 导入有道单词本控件
 input_youdao_word_book_label = tk.Label(text="Import youdao word book：")
 input_youdao_word_book_button = tk.Button(window, text="Off",
                                           command=display_input_interface_command)
-input_youdao_word_book_label.place(x=20, y=45, anchor='nw')
-input_youdao_word_book_button.place(x=180, y=40, anchor='nw')
+input_youdao_word_book_label.grid(row=2, column=0, columnspan=3)
+input_youdao_word_book_button.grid(row=2, column=3, sticky=W)
+# 导入易混淆词控件
+input_confusing_words_book_label = tk.Label(text="Import confusing words book：")
+input_confusing_words_button = tk.Button(window, text="Off",
+                                          command=display_input_interface_command)
+input_confusing_words_book_label.grid(row=3, column=0, columnspan=3)
+input_confusing_words_button.grid(row=3, column=3, sticky=W)
 # 导入有道单词本的单词列表
 youdao_word_list_widget = tk.Listbox(window, height=19)
 # 将分析好的有道单词进行加工的按钮
 import_word_button = tk.Button(window, text="confirm",
                                command=import_youdao_word_command)
-#import_word_button.place(x=480, y=400, anchor='nw')
 # 各种label:
 source_choice_label = tk.Label(text="choice source :")
-source_choice_label.place(x=20, y=2, anchor='nw')
+source_choice_label.grid(row=0, column=1)
 vocabulary_label = tk.Label()  # 词汇表（CET4，考研等）
-vocabulary_label.place(x=230, y=45, anchor='nw')
+vocabulary_label.grid(row=4, column=0, columnspan=4, sticky=W,padx=10)
 # 开始执行
 source_choice_command()  # 初始化选择的默认状态
 window.mainloop()
