@@ -6,6 +6,13 @@ import codecs  # 读写utf-8
 from bs4 import BeautifulSoup
 
 
+def is_chinese(uchar):  # 找到中文UTF-8编码
+    if '\u4e00' <= uchar <= '\u9fff':
+        return True
+    else:
+        return False
+
+
 def en_to_zh_bing(word):  # bing模式英译中
     try:
         url = "http://cn.bing.com/dict/search?q=" + word
@@ -58,6 +65,12 @@ def en_to_zh_iciba(word):  # 爱词霸模式英译中
 
 
 def en_to_zh_youdict(word):  # youdict模式英译中
+    return_dictionary = {}
+    return_dictionary["word"] = ""
+    return_dictionary["translation"] = ""
+    return_dictionary["example_english"] = ""
+    return_dictionary["example_chinese"] = ""
+    return_dictionary["root"] = ""
     try:
         url = "http://www.youdict.com/w/" + word
         response = urllib.request.urlopen(url)
@@ -65,14 +78,13 @@ def en_to_zh_youdict(word):  # youdict模式英译中
         soup = BeautifulSoup(html, 'lxml')
     except:
         return "time out\n"
-    return_string = ""
     # 目标词汇
     try:
         word = soup.find('h3', id="yd-word").text
-        word = re.sub('\s', '', word)  # 将string中的所有空白字符删除
+        return_dictionary["word"] = re.sub('\s', '', word)  # 将string中的所有空白字符删除
     except AttributeError:
         vocabulary_label.config(text="\nNo words found")
-        return ""
+        return return_dictionary
     # 在哪些词汇表中
     try:
         vocabulary = soup.find(style="margin-bottom:6px;").text.split("\n")[1]  # 删除这个句子中的回车
@@ -85,16 +97,22 @@ def en_to_zh_youdict(word):  # youdict模式英译中
         expresses = soup.find(id='yd-word-meaning')
         for item in expresses:
             express = item.text + express
-        express = re.sub('\s', '', express)
+        return_dictionary["translation"] = re.sub('\s', '', express)
     except AttributeError:
-        express = ""
+        return_dictionary["translation"] = "Parsing translation failed"
     # 例句
     try:
-        english_examples = soup.find(id='yd-liju').text
-        delete_number = english_examples.index("来自")  # 只需要第一个例句
-        english_examples = english_examples[4:delete_number]
+        example = soup.find(id='yd-liju').text
+        delete_number = example.index("来自")  # 只需要第一个例句,删掉最后来自哪个字典的部分
+        example = example[4:delete_number]
+        for char in example:
+            if is_chinese(char):
+                example_list = example.split(char, 1)
+                return_dictionary["example_english"] = example_list[0]
+                return_dictionary["example_chinese"] = char + example_list[1]
+                break
     except AttributeError:
-        english_examples = ""
+        return_dictionary["example_english"] = "Parsing example failed"
     # 词根
     root = ""
     try:
@@ -103,9 +121,10 @@ def en_to_zh_youdict(word):  # youdict模式英译中
             if ex != 0:
                 root = root + item.text
             ex = ex + 1
+        return_dictionary["root"] = root
     except AttributeError:
-        root = "null"
-    return word + '\n' + express + '\n' + english_examples + '\n' + root + '\n'
+        return_dictionary["root"] = "Parsing root failed"
+    return return_dictionary
 
 
 # 点击导出按钮之后
@@ -145,7 +164,6 @@ def display_input_interface_command():
         input_youdao_word_book_button.config(text="Off")
         youdao_word_list_widget.grid_forget()  # 隐藏单词列表控件
         import_word_button.grid_forget()  # 隐藏确认导入按钮
-        # import_word_button.place_forget()  # 隐藏确认导入按钮
         window.geometry("445x500")  # 恢复原来的窗口大小
     else:
         activate_input_youdao_word_book_feature = True
@@ -196,11 +214,18 @@ def output_to_result_widget(word):  # 将单词输出到显示的文本框
     global select_dictionaries
     # 选择使用哪个字典输出到文本框
     if select_dictionaries == 1:
-        display_result_widget.insert("end", en_to_zh_bing(word))
+        # display_result_widget.insert("end", en_to_zh_bing(word))
+        word_dictionary = en_to_zh_youdict(word)
     elif select_dictionaries == 2:
-        display_result_widget.insert("end", en_to_zh_iciba(word))
+        # display_result_widget.insert("end", en_to_zh_iciba(word))
+        word_dictionary = en_to_zh_youdict(word)
     elif select_dictionaries == 3:
-        display_result_widget.insert("end", en_to_zh_youdict(word))
+        word_dictionary = en_to_zh_youdict(word)
+    input_string = word_dictionary["word"] + "\n" + \
+                   word_dictionary["translation"] + "<br/>" + word_dictionary["example_chinese"] + "\n" + \
+                   word_dictionary["example_english"] + "\n" + \
+                   word_dictionary["root"] + "\n"
+    display_result_widget.insert("end", input_string)
     display_result_widget.insert("end", "-----------------\n")
     display_message_widget.config(text="已添加新单词")
 
