@@ -8,9 +8,10 @@ import pyexcel_xlsx
 
 
 def read_xlsx():
-    xls_data = pyexcel_xlsx.get_data(r"test.xlsx")
+    file = tk.filedialog.askopenfilename(filetypes=[("excel文件", ".xlsx")])
+    xls_data = pyexcel_xlsx.get_data(file)
     for sheet in xls_data.keys():
-        return xls_data[sheet]
+        return xls_data[sheet] # 仅返回第一个表
 
 
 def is_chinese(uchar):  # 找到中文UTF-8编码
@@ -28,27 +29,33 @@ def en_to_zh_bing(word):  # bing模式英译中
         soup = BeautifulSoup(html, 'lxml')
     except:
         return "time out\n"
+    return_dictionary = {}
+    return_dictionary["word"] = ""
+    return_dictionary["translation"] = ""
+    return_dictionary["example_english"] = ""
+    return_dictionary["example_chinese"] = ""
+    return_dictionary["root"] = ""
     return_string = ""
     # 目标词汇
-    word = soup.find('div', id="headword").text
+    return_dictionary["word"] = soup.find('div', id="headword").text
     # 释义
     express = ""
     expresses = soup.find_all('span', class_='def')
     for item in expresses:
         express = item.text + express
+    return_dictionary["translation"] = express
     # 例句
     english_example = ""
     english_examples = soup.find('div', class_='sen_en')
     for item in english_examples:
         english_example = english_example + item.text
-    return_string = return_string + word + "\n" + express
+    return_dictionary["example_english"] = english_example
     chinese_example = ""
     chinese_examples = soup.find('div', class_='sen_cn')
     for item in chinese_examples:
         chinese_example = chinese_example + item.text
-    # 合并
-    return_string = word + '\n' + express + '\n' + english_example + chinese_example + '\n'
-    return return_string
+    return_dictionary["example_chinese"] = chinese_example
+    return return_dictionary
 
 
 def en_to_zh_iciba(word):  # 爱词霸模式英译中
@@ -219,6 +226,7 @@ def import_confuded_word_list_command():
 select_dictionaries = 0
 window = tk.Tk()
 window.geometry("445x500")
+
 source_choice_status = tk.IntVar()  # 点击词典选择按钮后，将按钮值赋给该变量
 window.title("生成anki单词本")
 
@@ -255,8 +263,7 @@ def get_word_result_dictionary(word):
     global select_dictionaries
     # 选择使用哪个字典输出到文本框
     if select_dictionaries == 1:
-        # display_result_widget.insert("end", en_to_zh_bing(word))
-        word_dictionary = en_to_zh_youdict(word)
+        word_dictionary = en_to_zh_bing(word)
     elif select_dictionaries == 2:
         # display_result_widget.insert("end", en_to_zh_iciba(word))
         word_dictionary = en_to_zh_youdict(word)
@@ -342,6 +349,12 @@ output_control_button.grid(row=12, column=2, pady=10)
 display_message_widget = tk.Label(window,
                                     text="未开始")
 display_message_widget.grid(row=13, column=0, padx=10, columnspan=6, rowspan=2, sticky=W)
+# 导入选择导入单词列表功能的下拉列表：
+# select_word_list_source =tk.StringVar()
+# select_word_list_source.set("confused")  # default value
+# select_word_list_source_option_menu = tk.OptionMenu(window, select_word_list_source, "youdao", "confused")
+# select_word_list_source_option_menu.grid(row=2, column=4)
+
 # 导入有道单词本控件
 input_youdao_word_book_label = tk.Label(text="Import youdao word book：")
 input_youdao_word_book_button = tk.Button(window, text="Off",
