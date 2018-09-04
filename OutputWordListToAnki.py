@@ -1,4 +1,5 @@
 import tkinter as tk
+from enum import Enum # 使用枚举类
 from tkinter.filedialog import *
 import urllib.request
 import re
@@ -6,19 +7,152 @@ import codecs  # 读写utf-8
 from bs4 import BeautifulSoup
 import pyexcel_xlsx
 
+class Methods:
+    """各种小的方法函数"""
+    @staticmethod
+    def read_xlsx():
+        file = tk.filedialog.askopenfilename(filetypes=[("excel文件", ".xlsx")])
+        xls_data = pyexcel_xlsx.get_data(file)
+        for sheet in xls_data.keys():
+            return xls_data[sheet]  # 仅返回第一个表
+
+
+class Translator:
+    """将英文单词翻译成带有翻译、例句等的字典"""
+    __dictionary_type_dict = {"youdao": 1, "iciba": 2, "youdict": 3}
+    __selected_dictionary_type = 0
+    __word = ""
+    __result_dictionary = {}
+
+    def __init__(self, word, dictonary_type):
+        """初始化返回字典，选择需要使用的在线字典"""
+        self.__result_dictionary["word"] = ""
+        self.__result_dictionary["translation"] = ""
+        self.__result_dictionary["example_english"] = ""
+        self.__result_dictionary["example_chinese"] = ""
+        self.__result_dictionary["root"] = ""
+        self.__result_dictionary["vocabulary_range"] = ""
+        self.__result_dictionary["error"] = "no error"
+        self.__word = word
+        try:
+            self.__selected_dictionary_type = activate_input_word_dict[dictonary_type]
+        except KeyError:
+            self.__result_dictionary["error"] = "No dictionary can be found"
+
+    def __select_dictionary(self):
+        if self.__selected_dictionary_type == 1:
+            self.__bing_dictionary(self)
+        elif self.__selected_dictionary_type == 2:
+            self.__iciba_dictionary(self)
+        elif self.__selected_dictionary_type == 3:
+            self.__youdict_dictionary(self)
+
+    def get_result_dictionary(self):
+        return self.__result_dictionary
+
+    def __bing_dictionary(self):
+        try:
+            url = "http://cn.bing.com/dict/search?q=" + self.__word
+            response = urllib.request.urlopen(url)
+            html = response.read().decode("utf-8")
+            soup = BeautifulSoup(html, 'lxml')
+        except:
+            return "time out\n"
+        # 目标词汇
+        self.__result_dictionary["word"] = soup.find('div', id="headword").text
+        # 释义
+        express = ""
+        expresses = soup.find_all('span', class_='def')
+        for item in expresses:
+            express = item.text + express
+        self.__result_dictionary["translation"] = express
+        # 例句
+        english_example = ""
+        english_examples = soup.find('div', class_='sen_en')
+        for item in english_examples:
+            english_example = english_example + item.text
+        self.__result_dictionary["example_english"] = english_example
+        chinese_example = ""
+        chinese_examples = soup.find('div', class_='sen_cn')
+        for item in chinese_examples:
+            chinese_example = chinese_example + item.text
+        self.__result_dictionary["example_chinese"] = chinese_example
+
+    def __iciba_dictionary(self):
+        try:
+            url = "http://www.iciba.com/" + self.__word
+            response = urllib.request.urlopen(url)
+            html = response.read().decode("utf-8")
+            soup = BeautifulSoup(html, 'lxml')
+        except:
+            return "time out\n"
+        # 目标词汇
+        word = soup.find('h1', class_="keyword").text
+        self.__result_dictionary["word"] = re.sub('\s', '', word)  # 将string中的所有空白字符删除
+        # 释义
+        express = ""
+        expresses = soup.find_all('ul', class_='base-list switch_part')
+        for item in expresses:
+            express = item.text + express
+        self.__result_dictionary["translation"] = re.sub('\s', '', express)
+
+    def __yodict_dictionary(self):
+        try:
+            url = "http://www.youdict.com/w/" + self.__word
+            response = urllib.request.urlopen(url)
+            html = response.read().decode("utf-8")
+            soup = BeautifulSoup(html, 'lxml')
+        except:
+            return "time out\n"
+        # 目标词汇
+        try:
+            word = soup.find('h3', id="yd-word").text
+            self.__result_dictionary["word"] = re.sub('\s', '', word)  # 将string中的所有空白字符删除
+        except AttributeError:
+            self.__result_dictionary["error"] = "No words found"
+        # 在哪些词汇表中
+        try:
+            self.__result_dictionary["vocabulary_range"] = soup.find(style="margin-bottom:6px;").text.split("\n")[1]  # 删除这个句子中的回车
+        except AttributeError:
+            self.__result_dictionary["vocabulary_range"] = "Unknown"
+        # 释义:
+        try:
+            expresses = soup.find(id='yd-word-meaning')
+            for item in expresses:
+                express = item.text + express
+            self.__result_dictionary["translation"] = re.sub('\s', '', express)
+        except AttributeError:
+            self.__result_dictionary["translation"] = "Parsing translation failed"
+        # 例句
+        try:
+            example = soup.find(id='yd-liju').text
+            delete_number = example.index("来自")  # 只需要第一个例句,删掉最后来自哪个字典的部分
+            example = example[4:delete_number]
+            for char in example:
+                if Methods.is_chinese(char):
+                    example_list = example.split(char, 1)
+                    self.__result_dictionary["example_english"] = example_list[0]
+                    self.__result_dictionary["example_chinese"] = char + example_list[1]
+                    break
+        except AttributeError:
+            self.__result_dictionary["example_english"] = "Parsing example failed"
+        # 词根
+        root = ""
+        try:
+            ex = 0  # 除去第一个元素
+            for item in soup.find(id='yd-ciyuan').contents:
+                if ex != 0:
+                    root = root + item.text
+                ex = ex + 1
+            self.__result_dictionary["root"] = root
+        except AttributeError:
+            self.__result_dictionary["root"] = "Parsing root failed"
 
 def read_xlsx():
     file = tk.filedialog.askopenfilename(filetypes=[("excel文件", ".xlsx")])
     xls_data = pyexcel_xlsx.get_data(file)
     for sheet in xls_data.keys():
         return xls_data[sheet] # 仅返回第一个表
-
-
-def is_chinese(uchar):  # 找到中文UTF-8编码
-    if '\u4e00' <= uchar <= '\u9fff':
-        return True
-    else:
-        return False
 
 
 def en_to_zh_bing(word):  # bing模式英译中
@@ -120,7 +254,7 @@ def en_to_zh_youdict(word):  # youdict模式英译中
         delete_number = example.index("来自")  # 只需要第一个例句,删掉最后来自哪个字典的部分
         example = example[4:delete_number]
         for char in example:
-            if is_chinese(char):
+            if Methods.is_chinese(char):
                 example_list = example.split(char, 1)
                 return_dictionary["example_english"] = example_list[0]
                 return_dictionary["example_chinese"] = char + example_list[1]
@@ -139,6 +273,9 @@ def en_to_zh_youdict(word):  # youdict模式英译中
     except AttributeError:
         return_dictionary["root"] = "Parsing root failed"
     return return_dictionary
+
+
+
 
 
 # 点击导出按钮之后
