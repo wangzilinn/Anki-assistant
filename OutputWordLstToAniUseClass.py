@@ -20,9 +20,8 @@ class Methods:
 class Translator:
     """将英文单词翻译成带有翻译、例句等的字典"""
     dictionary_type_tuple = ("bing", "iciba", "youdict")
-    query_time_out = 30  #在线字典访问超时时间
+    query_time_out = 30  # 在线字典访问超时时间
     __selected_dictionary_type = 0
-
 
     def __init__(self, word, dictonary_type):
         """初始化返回字典，选择需要使用的在线字典"""
@@ -76,7 +75,7 @@ class Translator:
     def __iciba_dictionary(self):
         try:
             url = "http://www.iciba.com/" + self.__result_dictionary["word"]
-            response = urllib.request.urlopen(url,timeout=Translator.query_time_out)
+            response = urllib.request.urlopen(url, timeout=Translator.query_time_out)
             html = response.read().decode("utf-8")
             soup = BeautifulSoup(html, 'lxml')
         except:
@@ -104,7 +103,7 @@ class Translator:
             word = soup.find('h3', id="yd-word").text
             self.__result_dictionary["word"] = re.sub('\s', '', word)  # 将string中的所有空白字符删除
         except AttributeError:
-            self.__result_dictionary["error"] = "No words found"
+            self.__result_dictionary["word"] = "No words found"
         # 在哪些词汇表中
         try:
             self.__result_dictionary["vocabulary_range"] = soup.find(style="margin-bottom:6px;").text.split("\n")[
@@ -236,7 +235,8 @@ class Framework(tk.Tk):
             self.__selected_dictionary_type = tk.StringVar(self)
             self.__selected_dictionary_type.set("null")  # default value
             self.option_menu_select_online_dictionary = tk.OptionMenu(self, self.__selected_dictionary_type,
-                                                                      *Translator.dictionary_type_tuple)
+                                                                      *Translator.dictionary_type_tuple,
+                                                                      command=self.__command_option_menu_changed)
             self.option_menu_select_online_dictionary.grid(row=0, column=1, sticky=W)
 
         def place_input_word_book_part():
@@ -247,7 +247,8 @@ class Framework(tk.Tk):
             self.__selected_input_word_book_type = tk.StringVar(self)
             self.__selected_input_word_book_type.set("null")  # default value
             self.option_menu_select_input_word_book_type = tk.OptionMenu(self, self.__selected_input_word_book_type,
-                                                                         *WordListProcessor.word_list_tuple)
+                                                                         *WordListProcessor.word_list_tuple,
+                                                                         command=self.__command_option_menu_changed)
             self.option_menu_select_input_word_book_type.grid(row=1, column=1, sticky=W)
             self.button_input_word_book_confirm = tk.Button(text="Off",
                                                             command=self.__command_button_input_word_book_confirm)
@@ -273,10 +274,11 @@ class Framework(tk.Tk):
             except Exception:
                 self.message.config(text=str(Exception.args))
                 return
-            input_string = word_dictionary["word"] + "\n" + \
-                           word_dictionary["translation"] + "<br/>" + word_dictionary["example_chinese"] + "\n" + \
-                           word_dictionary["example_english"] + "\n" + \
-                           word_dictionary["root"] + "\n"
+            input_string = "{0}\n{1}<br/>{2}\n{3}\n{4}\n".format(word_dictionary["word"],
+                                                                 word_dictionary["translation"],
+                                                                 word_dictionary["example_chinese"],
+                                                                 word_dictionary["example_english"],
+                                                                 word_dictionary["root"])
             self.text_show_all.insert("end", input_string)
             self.text_show_all.insert("end", "-----------------\n")
             self.label_vocabulary.config(text=word_dictionary["vocabulary_range"])
@@ -359,7 +361,7 @@ class Framework(tk.Tk):
                 query_list = word_list_processor.get_result_words_list()
                 for words in query_list:
                     self.list_box_words_list.insert('end', words)  # 装入列表
-            except :
+            except:
                 self.message.config(text="Failed to import the word book file")
                 self.__command_button_input_word_book_confirm()
         else:
@@ -379,6 +381,10 @@ class Framework(tk.Tk):
             list_item = self.list_box_words_list.get(0)
             self.list_box_words_list.delete(0)  # 删除第一个位置的字符
             self.__output_query_result_to_text_show_all(list_item)
+
+    def __command_option_menu_changed(self, event):
+        """改变字典选择项之后"""
+        self.message.config(text="select " + event)
 
 
 window = Framework()
