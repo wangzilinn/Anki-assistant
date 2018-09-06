@@ -7,16 +7,28 @@ from bs4 import BeautifulSoup
 import pyexcel_xlsx
 
 
+class Methods:
+    """各种小的方法函数"""
+    @staticmethod
+    def is_chinese(uchar):  # 找到中文UTF-8编码
+        if '\u4e00' <= uchar <= '\u9fff':
+            return True
+        else:
+            return False
+
+
 class Translator:
     """将英文单词翻译成带有翻译、例句等的字典"""
     dictionary_type_tuple = ("bing", "iciba", "youdict")
+    query_time_out = 30  #在线字典访问超时时间
     __selected_dictionary_type = 0
+
 
     def __init__(self, word, dictonary_type):
         """初始化返回字典，选择需要使用的在线字典"""
         self.__word = ""
         self.__result_dictionary = {"word": word, "translation": "", "example_english": "", "example_chinese": "",
-                                    "root": "", "vocabulary_range": "", "error": "no error"}
+                                    "root": "", "vocabulary_range": ""}
         # 装填字典
         self.__load_result_dictionary(dictonary_type)
 
@@ -36,11 +48,11 @@ class Translator:
     def __bing_dictionary(self):
         try:
             url = "http://cn.bing.com/dict/search?q=" + self.__result_dictionary["word"]
-            response = urllib.request.urlopen(url)
+            response = urllib.request.urlopen(url, timeout=Translator.query_time_out)
             html = response.read().decode("utf-8")
             soup = BeautifulSoup(html, 'lxml')
         except:
-            return "time out\n"
+            raise Exception("Query time out")
         # 目标词汇
         self.__result_dictionary["word"] = soup.find('div', id="headword").text
         # 释义
@@ -64,11 +76,11 @@ class Translator:
     def __iciba_dictionary(self):
         try:
             url = "http://www.iciba.com/" + self.__result_dictionary["word"]
-            response = urllib.request.urlopen(url)
+            response = urllib.request.urlopen(url,timeout=Translator.query_time_out)
             html = response.read().decode("utf-8")
             soup = BeautifulSoup(html, 'lxml')
         except:
-            return "time out\n"
+            raise Exception("Query time out")
         # 目标词汇
         word = soup.find('h1', class_="keyword").text
         self.__result_dictionary["word"] = re.sub('\s', '', word)  # 将string中的所有空白字符删除
@@ -82,11 +94,11 @@ class Translator:
     def __youdict_dictionary(self):
         try:
             url = "http://www.youdict.com/w/" + self.__result_dictionary["word"]
-            response = urllib.request.urlopen(url)
+            response = urllib.request.urlopen(url, timeout=Translator.query_time_out)
             html = response.read().decode("utf-8")
             soup = BeautifulSoup(html, 'lxml')
         except:
-            return "time out\n"
+            raise Exception("Query time out")
         # 目标词汇
         try:
             word = soup.find('h3', id="yd-word").text
@@ -220,23 +232,23 @@ class Framework(tk.Tk):
         def place_select_dictionary_part():
             # 选择词典控件
             self.label_source_choice = tk.Label(text="choice source :")
-            self.label_source_choice.grid(row=0, column=0)
+            self.label_source_choice.grid(row=0, column=0, sticky=W, padx=10)
             self.__selected_dictionary_type = tk.StringVar(self)
             self.__selected_dictionary_type.set("null")  # default value
             self.option_menu_select_online_dictionary = tk.OptionMenu(self, self.__selected_dictionary_type,
                                                                       *Translator.dictionary_type_tuple)
-            self.option_menu_select_online_dictionary.grid(row=0, column=1)
+            self.option_menu_select_online_dictionary.grid(row=0, column=1, sticky=W)
 
         def place_input_word_book_part():
             # 导入单词本控件
             self.__activate_input_word_feature = False  # 是否启动导入单词功能标志位
             self.label_choice_word_book = tk.Label(text="choice word book :")
-            self.label_choice_word_book.grid(row=1, column=0)
+            self.label_choice_word_book.grid(row=1, column=0, sticky=W, padx=10)
             self.__selected_input_word_book_type = tk.StringVar(self)
             self.__selected_input_word_book_type.set("null")  # default value
             self.option_menu_select_input_word_book_type = tk.OptionMenu(self, self.__selected_input_word_book_type,
                                                                          *WordListProcessor.word_list_tuple)
-            self.option_menu_select_input_word_book_type.grid(row=1, column=1)
+            self.option_menu_select_input_word_book_type.grid(row=1, column=1, sticky=W)
             self.button_input_word_book_confirm = tk.Button(text="Off",
                                                             command=self.__command_button_input_word_book_confirm)
             self.button_input_word_book_confirm.grid(row=1, column=3)
@@ -254,22 +266,31 @@ class Framework(tk.Tk):
 
     def __output_query_result_to_text_show_all(self, query_string):
         def output_single_word_result_to_text_show_all(word):
-            translator = Translator(word, self.__selected_dictionary_type.get())
-            word_dictionary = translator.get_result_dictionary()
+            # 如果查询发生错误，直接返回
+            try:
+                translator = Translator(word, self.__selected_dictionary_type.get())
+                word_dictionary = translator.get_result_dictionary()
+            except Exception:
+                self.message.config(text=str(Exception.args))
+                return
             input_string = word_dictionary["word"] + "\n" + \
                            word_dictionary["translation"] + "<br/>" + word_dictionary["example_chinese"] + "\n" + \
                            word_dictionary["example_english"] + "\n" + \
                            word_dictionary["root"] + "\n"
             self.text_show_all.insert("end", input_string)
             self.text_show_all.insert("end", "-----------------\n")
-
             self.label_vocabulary.config(text=word_dictionary["vocabulary_range"])
 
         def output_confused_words_list_result_to_text_show_all(word_list):
             word_dictionaries_list = []
-            for word in word_list:
-                translator = Translator(word, self.__selected_dictionary_type.get())
-                word_dictionaries_list.append(translator.get_result_dictionary())
+            # 如果查询发生错误，直接返回
+            try:
+                for word in word_list:
+                    translator = Translator(word, self.__selected_dictionary_type.get())
+                    word_dictionaries_list.append(translator.get_result_dictionary())
+            except Exception:
+                self.message.config(text=str(Exception.args))
+                return
             input_string = ""
             # words:
             for word_dictionary in word_dictionaries_list:
@@ -290,6 +311,7 @@ class Framework(tk.Tk):
             input_string = input_string[:-16] + "\n"
             self.text_show_all.insert("end", input_string)
             self.text_show_all.insert("end", "-----------------\n")
+
         input_words_list = query_string.split("-")
         if len(input_words_list) == 1:
             output_single_word_result_to_text_show_all(input_words_list[0])
@@ -360,4 +382,5 @@ class Framework(tk.Tk):
 
 
 window = Framework()
+window.title("Anki assistant")
 window.mainloop()
