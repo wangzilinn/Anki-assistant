@@ -189,51 +189,68 @@ class Framework(tk.Tk):
 
     def __place_widgets(self):
         """放置各种widgets"""
+        def place_message():
+            # 信息输出框：
+            self.message = tk.Message(text="Waiting for input", width=180)
+            self.message.grid(row=12, column=0, columnspan=2, sticky=W, ipadx=10)
 
-        # 单词输入框+确认按钮
-        self.entry_word = tk.Entry()
-        self.entry_word.grid(row=0, column=2)
+        def place_word_input_part():
+            # 单词输入框+确认按钮
+            self.entry_word = tk.Entry()
+            self.entry_word.grid(row=0, column=2)
 
-        self.button_word_confirm = tk.Button(text="confirm", command=self.__command_button_word_confirm)
-        self.button_word_confirm.grid(row=0, column=3)
+            self.button_word_confirm = tk.Button(text="confirm", command=self.__command_button_word_confirm)
+            self.button_word_confirm.grid(row=0, column=3)
 
-        # 词汇表（CET4，考研等）
-        self.label_vocabulary = tk.Label()
-        self.label_vocabulary.grid(row=4, column=0, columnspan=4, sticky=W, padx=10)
+        def place_label_vocabulary():
+            # 词汇表（CET4，考研等）
+            self.label_vocabulary = tk.Label()
+            self.label_vocabulary.grid(row=4, column=0, columnspan=4, sticky=W, padx=10)
 
-        # 显示将要被导出的text
-        self.text_show_all = tk.Text(width=60, height=24)
-        self.text_show_all.grid(row=5, column=0, columnspan=6, rowspan=6, padx=10)
+        def place_text_show_all():
+            # 显示将要被导出的text
+            self.text_show_all = tk.Text(width=60, height=28)
+            self.text_show_all.grid(row=5, column=0, columnspan=6, rowspan=6, padx=10)
 
-        # 将text控件中的文档按单词本格式输出
-        self.button_output_confirm = tk.Button(text="output", command=self.__command_button_output_confirm)
-        self.button_output_confirm.grid(row=12, column=2, pady=10)
+        def place_button_output_confirm():
+            # 将text控件中的文档按单词本格式输出的按钮
+            self.button_output_confirm = tk.Button(text="Output", command=self.__command_button_output_confirm)
+            self.button_output_confirm.grid(row=12, column=2)
 
-        # 选择词典控件
-        self.label_source_choice = tk.Label(text="choice source :")
-        self.label_source_choice.grid(row=0, column=0)
-        self.__selected_dictionary_type = tk.StringVar(self)
-        self.__selected_dictionary_type.set("null")  # default value
-        self.option_menu_select_online_dictionary = tk.OptionMenu(self, self.__selected_dictionary_type,
-                                                                  *Translator.dictionary_type_tuple)
-        self.option_menu_select_online_dictionary.grid(row=0, column=1)
+        def place_select_dictionary_part():
+            # 选择词典控件
+            self.label_source_choice = tk.Label(text="choice source :")
+            self.label_source_choice.grid(row=0, column=0)
+            self.__selected_dictionary_type = tk.StringVar(self)
+            self.__selected_dictionary_type.set("null")  # default value
+            self.option_menu_select_online_dictionary = tk.OptionMenu(self, self.__selected_dictionary_type,
+                                                                      *Translator.dictionary_type_tuple)
+            self.option_menu_select_online_dictionary.grid(row=0, column=1)
 
-        # 导入单词本控件
-        self.__activate_input_word_feature = False  # 是否启动导入单词功能标志位
-        self.label_choice_word_book = tk.Label(text="choice word book :")
-        self.label_choice_word_book.grid(row=1, column=0)
-        self.__selected_input_word_book_type = tk.StringVar(self)
-        self.__selected_input_word_book_type.set("null")  # default value
-        self.option_menu_select_input_word_book_type = tk.OptionMenu(self, self.__selected_input_word_book_type,
-                                                                     *WordListProcessor.word_list_tuple)
-        self.option_menu_select_input_word_book_type.grid(row=1, column=1)
-        self.button_input_word_book_confirm = tk.Button(text="Off",
-                                                        command=self.__command_button_input_word_book_confirm)
-        self.button_input_word_book_confirm.grid(row=1, column=3)
-        # 以下是隐藏的控件，当导入单词本时被.grid
-        self.list_box_words_list = tk.Listbox(self, height=19)
-        self.button_parse_list_box_words = tk.Button(text="confirm",
-                                                     command=self.__command_button_parse_list_box_words)
+        def place_input_word_book_part():
+            # 导入单词本控件
+            self.__activate_input_word_feature = False  # 是否启动导入单词功能标志位
+            self.label_choice_word_book = tk.Label(text="choice word book :")
+            self.label_choice_word_book.grid(row=1, column=0)
+            self.__selected_input_word_book_type = tk.StringVar(self)
+            self.__selected_input_word_book_type.set("null")  # default value
+            self.option_menu_select_input_word_book_type = tk.OptionMenu(self, self.__selected_input_word_book_type,
+                                                                         *WordListProcessor.word_list_tuple)
+            self.option_menu_select_input_word_book_type.grid(row=1, column=1)
+            self.button_input_word_book_confirm = tk.Button(text="Off",
+                                                            command=self.__command_button_input_word_book_confirm)
+            self.button_input_word_book_confirm.grid(row=1, column=3)
+            # 以下是隐藏的控件，当导入单词本时被.grid
+            self.list_box_words_list = tk.Listbox(self, height=23)
+            self.button_parse_list_box_words = tk.Button(text="confirm",
+                                                         command=self.__command_button_parse_list_box_words)
+        place_message()
+        place_word_input_part()
+        place_label_vocabulary()
+        place_text_show_all()
+        place_button_output_confirm()
+        place_select_dictionary_part()
+        place_input_word_book_part()
 
     def __output_query_result_to_text_show_all(self, query_string):
         def output_single_word_result_to_text_show_all(word):
@@ -283,13 +300,14 @@ class Framework(tk.Tk):
         input_word = self.entry_word.get()
         # 当没有输入时，点击无效
         if len(input_word) == 0:
+            self.message.config(text="No input word detected")
             return
         # 当没有选择在线字典时，点击无效
         if self.__selected_dictionary_type.get() == "null":
+            self.message.config(text="The online dictionary type has not been selected")
             return
         self.entry_word.delete(0, len(input_word))  # 清空输入框
         self.__output_query_result_to_text_show_all(input_word)
-
 
     # 点击导出按钮之后
     def __command_button_output_confirm(self):
@@ -305,17 +323,23 @@ class Framework(tk.Tk):
         if self.__activate_input_word_feature is False:
             # 当没有选择导入方式时，操作无效
             if self.__selected_input_word_book_type.get() == "null":
+                self.message.config(text="The word book type has not been selected")
                 return
             self.__activate_input_word_feature = True
             self.button_input_word_book_confirm.config(text="On")
             self.__configuring_panel_size("large")
             self.list_box_words_list.grid(row=5, column=6)  # 放置列表控件
             self.button_parse_list_box_words.grid(row=12, column=6)  # 放置确认导入按钮
-            file = askopenfilename(filetypes=WordListProcessor.file_types)
-            word_list_processor = WordListProcessor(file, self.__selected_input_word_book_type.get())
-            query_list = word_list_processor.get_result_words_list()
-            for words in query_list:
-                self.list_box_words_list.insert('end', words)  # 装入列表
+            # 打开文件选择框
+            try:
+                file = askopenfilename(filetypes=WordListProcessor.file_types)
+                word_list_processor = WordListProcessor(file, self.__selected_input_word_book_type.get())
+                query_list = word_list_processor.get_result_words_list()
+                for words in query_list:
+                    self.list_box_words_list.insert('end', words)  # 装入列表
+            except :
+                self.message.config(text="Failed to import the word book file")
+                self.__command_button_input_word_book_confirm()
         else:
             self.__activate_input_word_feature = False
             self.__configuring_panel_size("normal")
@@ -328,15 +352,11 @@ class Framework(tk.Tk):
         if self.list_box_words_list.size() > 0:
             # 当没有选择字典时，不进行操作
             if self.__selected_dictionary_type.get() == "null":
+                self.message.config(text="The word book type has not been selected")
                 return
             list_item = self.list_box_words_list.get(0)
             self.list_box_words_list.delete(0)  # 删除第一个位置的字符
             self.__output_query_result_to_text_show_all(list_item)
-
-
-
-
-
 
 
 window = Framework()
