@@ -1,7 +1,16 @@
 # Anki assistant
 从在线必应词典/爱词霸/youdict爬取信息生成Anki可用的单词本
 ### 第五版界面：
-
+#### 初始界面:
+![image](https://github.com/wangzilinn/Anki-assisent/blob/master/example%20pictures/%E5%88%9D%E5%A7%8B%E7%95%8C%E9%9D%A2.png)
+#### 查询单个词
+![image](https://github.com/wangzilinn/Anki-assisent/blob/master/example%20pictures/%E6%9F%A5%E8%AF%A2%E5%8D%95%E4%B8%AA%E8%AF%8D.png)
+#### 查询混淆词
+![image](https://github.com/wangzilinn/Anki-assisent/blob/master/example%20pictures/%E6%9F%A5%E8%AF%A2%E6%B7%B7%E6%B7%86%E8%AF%8D.png)
+#### 导入混淆词
+![image](https://github.com/wangzilinn/Anki-assisent/blob/master/example%20pictures/%E8%A7%A3%E6%9E%90%E5%AF%BC%E5%85%A5%E7%9A%84%E6%B7%B7%E6%B7%86%E8%AF%8D.png)
+#### 解析导入的混淆词
+![image](https://github.com/wangzilinn/Anki-assisent/blob/master/example%20pictures/%E5%AF%BC%E5%85%A5%E6%B7%B7%E6%B7%86%E8%AF%8Dexcel.png)
 ### 第五版功能：
 1. 导入有道单词本
 2. 导入混淆词excel(示例文件在库中test.xlsx)
