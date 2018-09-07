@@ -202,31 +202,42 @@ class Framework(tk.Tk):
         """放置各种widgets"""
         def place_message():
             # 信息输出框：
-            self.message = tk.Message(text="Waiting for input", width=180)
-            self.message.grid(row=12, column=0, columnspan=2, sticky=W, ipadx=10)
+            self.message = tk.Message(text="Waiting for input", width=100)
+            self.message.grid(row=1, column=3, columnspan=2, rowspan=2, sticky=N)
 
         def place_word_input_part():
             # 单词输入框+确认按钮
             self.entry_word = tk.Entry()
-            self.entry_word.grid(row=0, column=2)
+            self.entry_word.grid(row=0, column=2, columnspan=2, padx=0)
 
-            self.button_word_confirm = tk.Button(text="confirm", command=self.__command_button_word_confirm)
-            self.button_word_confirm.grid(row=0, column=3)
+            self.button_word_confirm = tk.Button(text="Confirm", command=self.__command_button_word_confirm)
+            self.button_word_confirm.grid(row=0, column=4)
 
         def place_label_vocabulary():
             # 词汇表（CET4，考研等）
-            self.label_vocabulary = tk.Label()
-            self.label_vocabulary.grid(row=4, column=0, columnspan=4, sticky=W, padx=10)
+            self.label_vocabulary = tk.Label(text="Vocabulary range")
+            self.label_vocabulary.grid(row=2, column=0, columnspan=4, sticky=W, padx=10)
 
         def place_text_show_all():
             # 显示将要被导出的text
             self.text_show_all = tk.Text(width=60, height=28)
             self.text_show_all.grid(row=5, column=0, columnspan=6, rowspan=6, padx=10)
 
-        def place_button_output_confirm():
+        def place_button_output_part():
             # 将text控件中的文档按单词本格式输出的按钮
             self.button_output_confirm = tk.Button(text="Output", command=self.__command_button_output_confirm)
-            self.button_output_confirm.grid(row=12, column=2)
+            self.button_output_confirm.grid(row=12, column=3, columnspan=2)
+            # 保存路径字符串
+            self.output_path = tk.StringVar(self)
+            # 路径选择label
+            self.label_select_output_path = tk.Label(text="Select output path:")
+            self.label_select_output_path.grid(row=12, column=0, padx=10)
+            # 路径选择框
+            self.entry_output_path = tk.Entry(self, textvariable=self.output_path)
+            self.entry_output_path.grid(row=12, column=1)
+            # 打开路径选择的按钮
+            self.button_select_output_path = tk.Button(text="Select", command=self.__command_button_select_output_path)
+            self.button_select_output_path.grid(row=12, column=2, sticky=W)
 
         def place_select_dictionary_part():
             # 选择词典控件
@@ -252,7 +263,7 @@ class Framework(tk.Tk):
             self.option_menu_select_input_word_book_type.grid(row=1, column=1, sticky=W)
             self.button_input_word_book_confirm = tk.Button(text="Off",
                                                             command=self.__command_button_input_word_book_confirm)
-            self.button_input_word_book_confirm.grid(row=1, column=3)
+            self.button_input_word_book_confirm.grid(row=1, column=2, sticky=W)
             # 以下是隐藏的控件，当导入单词本时被.grid
             self.list_box_words_list = tk.Listbox(self, height=23)
             self.button_parse_list_box_words = tk.Button(text="confirm",
@@ -261,7 +272,7 @@ class Framework(tk.Tk):
         place_word_input_part()
         place_label_vocabulary()
         place_text_show_all()
-        place_button_output_confirm()
+        place_button_output_part()
         place_select_dictionary_part()
         place_input_word_book_part()
 
@@ -335,12 +346,20 @@ class Framework(tk.Tk):
 
     # 点击导出按钮之后
     def __command_button_output_confirm(self):
+        # 先检测路径是否存在
+        if self.output_path.get() == "":
+            self.message.config(text="No output path selected yet")
+            return
+        # 整理显示框中的字符串
         input_str = self.text_show_all.get("0.0", "end")
         input_str = input_str.replace("\n", "\t")
         input_str = input_str.replace("\t-----------------\t", "\r\n")
-        fo = codecs.open("C:\\Users\\78286\\Desktop\\foo.txt", "a+", "utf-8")
-        fo.write(input_str[0:-1])  # 去掉最后一个\t
+        input_str = input_str[0:-1] # 去掉最后一个\t
+        # 追加写入
+        fo = codecs.open(self.output_path.get() + "/Anki_words.txt", "a+", "utf-8")
+        fo.write(input_str)
         fo.close()
+        self.message.config(text="Output completed")
         self.text_show_all.delete("0.0", "end")  # 清空显示区
 
     def __command_button_input_word_book_confirm(self):
@@ -385,6 +404,10 @@ class Framework(tk.Tk):
     def __command_option_menu_changed(self, event):
         """改变字典选择项之后"""
         self.message.config(text="select " + event)
+
+    def __command_button_select_output_path(self):
+        """点击选择输出路径之后"""
+        self.output_path.set(askdirectory())
 
 
 window = Framework()
