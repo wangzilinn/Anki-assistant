@@ -9,6 +9,7 @@ import pyexcel_xlsx
 
 class Methods:
     """各种小的方法函数"""
+
     @staticmethod
     def is_chinese(uchar):  # 找到中文UTF-8编码
         if '\u4e00' <= uchar <= '\u9fff':
@@ -45,13 +46,10 @@ class Translator:
         return self.__result_dictionary
 
     def __bing_dictionary(self):
-        try:
-            url = "http://cn.bing.com/dict/search?q=" + self.__result_dictionary["word"]
-            response = urllib.request.urlopen(url, timeout=Translator.query_time_out)
-            html = response.read().decode("utf-8")
-            soup = BeautifulSoup(html, 'lxml')
-        except:
-            raise Exception("Query time out")
+        url = "http://cn.bing.com/dict/search?q=" + self.__result_dictionary["word"]
+        response = urllib.request.urlopen(url, timeout=Translator.query_time_out)
+        html = response.read().decode("utf-8")
+        soup = BeautifulSoup(html, 'lxml')
         # 目标词汇
         self.__result_dictionary["word"] = soup.find('div', id="headword").text
         # 释义
@@ -73,13 +71,10 @@ class Translator:
         self.__result_dictionary["example_chinese"] = chinese_example
 
     def __iciba_dictionary(self):
-        try:
-            url = "http://www.iciba.com/" + self.__result_dictionary["word"]
-            response = urllib.request.urlopen(url, timeout=Translator.query_time_out)
-            html = response.read().decode("utf-8")
-            soup = BeautifulSoup(html, 'lxml')
-        except:
-            raise Exception("Query time out")
+        url = "http://www.iciba.com/" + self.__result_dictionary["word"]
+        response = urllib.request.urlopen(url, timeout=Translator.query_time_out)
+        html = response.read().decode("utf-8")
+        soup = BeautifulSoup(html, 'lxml')
         # 目标词汇
         word = soup.find('h1', class_="keyword").text
         self.__result_dictionary["word"] = re.sub('\s', '', word)  # 将string中的所有空白字符删除
@@ -91,13 +86,10 @@ class Translator:
         self.__result_dictionary["translation"] = re.sub('\s', '', express)
 
     def __youdict_dictionary(self):
-        try:
-            url = "http://www.youdict.com/w/" + self.__result_dictionary["word"]
-            response = urllib.request.urlopen(url, timeout=Translator.query_time_out)
-            html = response.read().decode("utf-8")
-            soup = BeautifulSoup(html, 'lxml')
-        except:
-            raise Exception("Query time out")
+        url = "http://www.youdict.com/w/" + self.__result_dictionary["word"]
+        response = urllib.request.urlopen(url, timeout=Translator.query_time_out)
+        html = response.read().decode("utf-8")
+        soup = BeautifulSoup(html, 'lxml')
         # 目标词汇
         try:
             word = soup.find('h3', id="yd-word").text
@@ -147,16 +139,18 @@ class Translator:
 
 class WordListProcessor:
     """解析导入的单词本,返回单词数组"""
-    word_list_tuple = ("youdao", "confuesd_words", "eudic")
-    file_types = [("excel文件", ".xlsx"), ("txt文件", ".txt")]
+    word_list_type_dict = {'youdao': dict(file_type=[("txt文件", ".txt")], function=0),
+                           'confused_words': dict(file_type=[("excel文件", ".xlsx")], function=1),
+                           'eduic': dict(file_type=[("txt文件", ".txt")], function=2)}
 
     def __init__(self, file, word_list_type):
         self.__result_words_list = []
-        if WordListProcessor.word_list_tuple[0] == word_list_type:
+
+        if WordListProcessor.word_list_type_dict[word_list_type]["function"] == 0:
             self.__parse_youdao_words(file)
-        elif WordListProcessor.word_list_tuple[1] == word_list_type:
+        elif WordListProcessor.word_list_type_dict[word_list_type]["function"] == 1:
             self.__parse_confused_words(file)
-        elif WordListProcessor.word_list_tuple[2] == word_list_type:
+        elif WordListProcessor.word_list_type_dict[word_list_type]["function"] == 2:
             self.__parse_eudic_words(file)
         # 若增加解析器就加一个elif
         else:
@@ -174,8 +168,10 @@ class WordListProcessor:
             break  # 仅返回第一个表
 
     def __parse_youdao_words(self, file):
-        with open(file, 'r', encoding="utf-8") as f1:  # 打开文件
-            txt_string = f1.read()  # 读入文件内容到str1中
+        # with open(file, 'r', encoding="utf-8") as f1:  # 打开文件
+        #     txt_string = f1.read()  # 读入文件内容到str1中
+        f1 = open(file, 'r', encoding="utf-8")
+        txt_string = f1.read()  # 读入文件内容到str1中
         for item in txt_string.split("\n"):
             if re.match(r'\d*, ', item):  # 提取出有单词的一项（这一行第一个是数字之后接着逗号之后是一个空格）
                 item = item.split(" ")[1]  # 只要每项中的单词而不要序号和音标
@@ -211,6 +207,7 @@ class Framework(tk.Tk):
 
     def __place_widgets(self):
         """放置各种widgets"""
+
         def place_message():
             # 信息输出框：
             self.message = tk.Message(text="Waiting for input", width=100)
@@ -269,7 +266,7 @@ class Framework(tk.Tk):
             self.__selected_input_word_book_type = tk.StringVar(self)
             self.__selected_input_word_book_type.set("null")  # default value
             self.option_menu_select_input_word_book_type = tk.OptionMenu(self, self.__selected_input_word_book_type,
-                                                                         *WordListProcessor.word_list_tuple,
+                                                                         *WordListProcessor.word_list_type_dict,
                                                                          command=self.__command_option_menu_changed)
             self.option_menu_select_input_word_book_type.grid(row=1, column=1, sticky=W)
             self.button_input_word_book_confirm = tk.Button(text="Off",
@@ -279,6 +276,7 @@ class Framework(tk.Tk):
             self.list_box_words_list = tk.Listbox(self, height=23)
             self.button_parse_list_box_words = tk.Button(text="confirm",
                                                          command=self.__command_button_parse_list_box_words)
+
         place_message()
         place_word_input_part()
         place_label_vocabulary()
@@ -293,8 +291,8 @@ class Framework(tk.Tk):
             try:
                 translator = Translator(word, self.__selected_dictionary_type.get())
                 word_dictionary = translator.get_result_dictionary()
-            except Exception:
-                self.message.config(text=str(Exception.args))
+            except Exception as e:
+                self.message.config(text=str(e))
                 return
             input_string = "{0}\n{1}<br/>{2}\n{3}\n{4}\n".format(word_dictionary["word"],
                                                                  word_dictionary["translation"],
@@ -312,8 +310,8 @@ class Framework(tk.Tk):
                 for word in word_list:
                     translator = Translator(word, self.__selected_dictionary_type.get())
                     word_dictionaries_list.append(translator.get_result_dictionary())
-            except Exception:
-                self.message.config(text=str(Exception.args))
+            except Exception as e:
+                self.message.config(text=str(e))
                 return
             input_string = ""
             # words:
@@ -365,7 +363,7 @@ class Framework(tk.Tk):
         input_str = self.text_show_all.get("0.0", "end")
         input_str = input_str.replace("\n", "\t")
         input_str = input_str.replace("\t-----------------\t", "\r\n")
-        input_str = input_str[0:-1] # 去掉最后一个\t
+        input_str = input_str[0:-1]  # 去掉最后一个\t
         # 追加写入
         fo = codecs.open(self.output_path.get() + "/Anki_words.txt", "a+", "utf-8")
         fo.write(input_str)
@@ -384,16 +382,20 @@ class Framework(tk.Tk):
             self.__configuring_panel_size("large")
             self.list_box_words_list.grid(row=5, column=6)  # 放置列表控件
             self.button_parse_list_box_words.grid(row=12, column=6)  # 放置确认导入按钮
-            # 打开文件选择框
-            try:
-                file = askopenfilename(filetypes=WordListProcessor.file_types)
-                word_list_processor = WordListProcessor(file, self.__selected_input_word_book_type.get())
-                query_list = word_list_processor.get_result_words_list()
-                for words in query_list:
-                    self.list_box_words_list.insert('end', words)  # 装入列表
-            except:
-                self.message.config(text="Failed to import the word book file")
-                self.__command_button_input_word_book_confirm()
+            # 当原来的列表为空时再次打开文件选择框，否则不重新选择文件
+            if self.list_box_words_list.size() == 0:
+                # 打开文件选择框
+                try:
+                    file = askopenfilename(
+                        filetypes=WordListProcessor.word_list_type_dict
+                        [self.__selected_input_word_book_type.get()]['file_type'])
+                    word_list_processor = WordListProcessor(file, self.__selected_input_word_book_type.get())
+                    query_list = word_list_processor.get_result_words_list()
+                    for words in query_list:
+                        self.list_box_words_list.insert('end', words)  # 装入列表
+                except Exception as e:
+                    self.message.config(text=str(e))
+                    self.__command_button_input_word_book_confirm()
         else:
             self.__activate_input_word_feature = False
             self.__configuring_panel_size("normal")
