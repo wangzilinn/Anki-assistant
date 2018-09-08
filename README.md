@@ -12,10 +12,11 @@
 #### 解析导入的混淆词
 ![image](https://github.com/wangzilinn/Anki-assisent/blob/master/example%20pictures/%E5%AF%BC%E5%85%A5%E6%B7%B7%E6%B7%86%E8%AF%8Dexcel.png)
 ### 第五版功能：
-1. 导入有道单词本
-2. 导入混淆词excel(示例文件在库中test.xlsx)
-3. 从在线词典youdao，iciba，youdict中查询或输入导入的单词
-4. 输出为Anki单词本
+1. 导入有道单词本（txt格式输出，需转为UTF-8编码）
+2. 导入欧陆单词本（txt格式输出）
+3. 导入混淆词excel(示例文件在库中test.xlsx)
+4. 从在线词典youdao\iciba\youdict中查询或输入导入的单词
+5. 输出为Anki单词本
 
 ### 之前版本的记录：
 #### 最近这几天每天都在背单词，发现了按照记忆曲线复习的单词本anki，觉得简直是神器，几天下来背单词的效率提高了不少。
