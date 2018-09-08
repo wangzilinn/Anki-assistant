@@ -2,7 +2,7 @@
 从在线必应词典/爱词霸/youdict爬取信息生成Anki可用的单词本
 ### 第五版界面：
 #### 初始界面:
-![image](https://github.com/wangzilinn/Anki-assisent/blob/master/example%20pictures/%E5%88%9D%E5%A7%8B%E7%95%8C%E9%9D%A2.png)
+![image](https://github.com/wangzilinn/Anki-assisent/blob/master/example%20pictures/%E6%96%B0%E7%89%88%E7%95%8C%E9%9D%A2.png)
 #### 查询单个词
 ![image](https://github.com/wangzilinn/Anki-assisent/blob/master/example%20pictures/%E6%9F%A5%E8%AF%A2%E5%8D%95%E4%B8%AA%E8%AF%8D.png)
 #### 查询混淆词
@@ -26,16 +26,17 @@
 3. 把搜索到的东西粘贴到单词本上
 为了加深印象，很多步骤都是手打，而不是直接复制（后来发现并没有什么卵用）
 
-### 为了节省时间，又拿起了许久不用的python写了个带图形界面的脚本，界面很简单，包括：
+#### 为了节省时间，又拿起了许久不用的python写了个带图形界面的脚本，界面很简单，包括：
 1. 单词查询控件
 2. 确认按钮
 3. 查询结果区
 4. 生成单词本按钮
 
 ### 操作方法：
-1. 将要添加的单词或单词本导入
-2. confirm
-3. 所有单词添加完毕后，output
+1. 将要添加的单词或单词本导入(注意：支持导入的有道单词本为使用有道单词软件输出的txt格式文件，并应手动转为UTF-8编码）
+2. Confirm
+3. 所有单词添加完毕后，Output
+4. 输出的Anki单词本卡片内分隔符为\t，卡片分隔符为\r\n
 
 ### 程序流程：
 1. 获取用户单词或单词本
@@ -44,8 +45,8 @@
 4. 输出到文件
 
 ### 修改源码时注意：
-1. 源码已经放上了，需要一些不是自带的的库
-2. 输出位置默认放到桌面
+1. 源码已经放上了，需要一些不是自带的的库（urllib，codecs，bs4，pyexcel_xlsx）
+2. 默认输出文件名为Anki_word_list.txt
 3. 未使用百度和google翻译的原因是他们网站都做了处理（混淆和ajax），图省事用了bing
 4. anki输出需要utf-8格式的输出，所以普通的打开文件操作是不行滴，要使用import codecs库
 
