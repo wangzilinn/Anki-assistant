@@ -147,7 +147,7 @@ class Translator:
 
 class WordListProcessor:
     """解析导入的单词本,返回单词数组"""
-    word_list_tuple = ("youdao", "confuesd_words")
+    word_list_tuple = ("youdao", "confuesd_words", "eudic")
     file_types = [("excel文件", ".xlsx"), ("txt文件", ".txt")]
 
     def __init__(self, file, word_list_type):
@@ -156,6 +156,9 @@ class WordListProcessor:
             self.__parse_youdao_words(file)
         elif WordListProcessor.word_list_tuple[1] == word_list_type:
             self.__parse_confused_words(file)
+        elif WordListProcessor.word_list_tuple[2] == word_list_type:
+            self.__parse_eudic_words(file)
+        # 若增加解析器就加一个elif
         else:
             pass
 
@@ -176,6 +179,14 @@ class WordListProcessor:
         for item in txt_string.split("\n"):
             if re.match(r'\d*, ', item):  # 提取出有单词的一项（这一行第一个是数字之后接着逗号之后是一个空格）
                 item = item.split(" ")[1]  # 只要每项中的单词而不要序号和音标
+                self.__result_words_list.append(item)  # 装入列表
+
+    def __parse_eudic_words(self, file):
+        with open(file, 'r', encoding="utf-8") as f1:  # 打开文件
+            txt_string = f1.read()  # 读入文件内容到str1中
+        for item in txt_string.split("\n"):
+            if re.match(r'\d+@', item):
+                item = item.split("@")[1]
                 self.__result_words_list.append(item)  # 装入列表
 
     def get_result_words_list(self):
