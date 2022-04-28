@@ -1,10 +1,11 @@
-import tkinter as tk
-from tkinter.filedialog import *
-import urllib.request
-import re
 import codecs  # 读写utf-8
-from bs4 import BeautifulSoup
+import re
+import tkinter as tk
+import urllib.request
+from tkinter.filedialog import *
+
 import pyexcel_xlsx
+from bs4 import BeautifulSoup
 
 
 class Methods:
@@ -71,19 +72,42 @@ class Translator:
         self.__result_dictionary["example_chinese"] = chinese_example
 
     def __iciba_dictionary(self):
-        url = "http://www.iciba.com/" + self.__result_dictionary["word"]
-        response = urllib.request.urlopen(url, timeout=Translator.query_time_out)
+        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) "
+                                 "Chrome/100.0.4896.127 Safari/537.36"}
+        url = "http://www.iciba.com/word?w=" + self.__result_dictionary["word"]
+        req = urllib.request.Request(url=url, headers=headers)
+        response = urllib.request.urlopen(req)
         html = response.read().decode("utf-8")
         soup = BeautifulSoup(html, 'lxml')
         # 目标词汇
-        word = soup.find('h1', class_="keyword").text
+        word = soup.find('h1', class_="Mean_word__hwr_g").text
         self.__result_dictionary["word"] = re.sub('\s', '', word)  # 将string中的所有空白字符删除
+        # 在哪些词汇表中
+        try:
+            self.__result_dictionary["vocabulary_range"] = soup.find("p", class_="Mean_tag__K_C8K").text
+        except AttributeError:
+            self.__result_dictionary["vocabulary_range"] = "Unknown"
         # 释义
         express = ""
-        expresses = soup.find_all('ul', class_='base-list switch_part')
+        expresses = soup.find_all('ul', class_='Mean_part__UI9M6')
         for item in expresses:
             express = item.text + express
         self.__result_dictionary["translation"] = re.sub('\s', '', express)
+        # 词根
+        root = ""
+        try:
+            for cnt, item in enumerate(soup.find(class_='Affix_affix__iiL_9').findAll("p")):
+                root += item.text + " "
+                if cnt == 2:
+                    break
+            self.__result_dictionary["root"] = root
+        except AttributeError:
+            self.__result_dictionary["root"] = "Unknown"
+        # 例句：
+        self.__result_dictionary["example_english"] = soup.find(class_="NormalSentence_sentence__Jr9aj").find(
+            class_="NormalSentence_en__BKdCu").text
+        self.__result_dictionary["example_chinese"] = soup.find(class_="NormalSentence_sentence__Jr9aj").find(
+            class_="NormalSentence_cn__gyUtC").text
 
     def __youdict_dictionary(self):
         url = "http://www.youdict.com/w/" + self.__result_dictionary["word"]
@@ -211,7 +235,7 @@ class Framework(tk.Tk):
         def place_message():
             # 信息输出框：
             self.message = tk.Message(text="Waiting for input", width=100)
-            self.message.grid(row=1, column=3, columnspan=2, rowspan=2, sticky=N)
+            self.message.grid(row=1, column=3, columnspan=2, rowspan=2, sticky="N")
 
         def place_word_input_part():
             # 单词输入框+确认按钮
@@ -224,7 +248,7 @@ class Framework(tk.Tk):
         def place_label_vocabulary():
             # 词汇表（CET4，考研等）
             self.label_vocabulary = tk.Label(text="Vocabulary range")
-            self.label_vocabulary.grid(row=2, column=0, columnspan=4, sticky=W, padx=10)
+            self.label_vocabulary.grid(row=2, column=0, columnspan=4, sticky="W", padx=10)
 
         def place_text_show_all():
             # 显示将要被导出的text
@@ -245,33 +269,33 @@ class Framework(tk.Tk):
             self.entry_output_path.grid(row=12, column=1)
             # 打开路径选择的按钮
             self.button_select_output_path = tk.Button(text="Select", command=self.__command_button_select_output_path)
-            self.button_select_output_path.grid(row=12, column=2, sticky=W)
+            self.button_select_output_path.grid(row=12, column=2, sticky="W")
 
         def place_select_dictionary_part():
             # 选择词典控件
             self.label_source_choice = tk.Label(text="choice source :")
-            self.label_source_choice.grid(row=0, column=0, sticky=W, padx=10)
+            self.label_source_choice.grid(row=0, column=0, sticky="W", padx=10)
             self.__selected_dictionary_type = tk.StringVar(self)
-            self.__selected_dictionary_type.set("null")  # default value
+            self.__selected_dictionary_type.set(Translator.dictionary_type_tuple[1])  # default value
             self.option_menu_select_online_dictionary = tk.OptionMenu(self, self.__selected_dictionary_type,
                                                                       *Translator.dictionary_type_tuple,
                                                                       command=self.__command_option_menu_changed)
-            self.option_menu_select_online_dictionary.grid(row=0, column=1, sticky=W)
+            self.option_menu_select_online_dictionary.grid(row=0, column=1, sticky="W")
 
         def place_input_word_book_part():
             # 导入单词本控件
             self.__activate_input_word_feature = False  # 是否启动导入单词功能标志位
             self.label_choice_word_book = tk.Label(text="choice word book :")
-            self.label_choice_word_book.grid(row=1, column=0, sticky=W, padx=10)
+            self.label_choice_word_book.grid(row=1, column=0, sticky="W", padx=10)
             self.__selected_input_word_book_type = tk.StringVar(self)
             self.__selected_input_word_book_type.set("null")  # default value
             self.option_menu_select_input_word_book_type = tk.OptionMenu(self, self.__selected_input_word_book_type,
                                                                          *WordListProcessor.word_list_type_dict,
                                                                          command=self.__command_option_menu_changed)
-            self.option_menu_select_input_word_book_type.grid(row=1, column=1, sticky=W)
+            self.option_menu_select_input_word_book_type.grid(row=1, column=1, sticky="W")
             self.button_input_word_book_confirm = tk.Button(text="Off",
                                                             command=self.__command_button_input_word_book_confirm)
-            self.button_input_word_book_confirm.grid(row=1, column=2, sticky=W)
+            self.button_input_word_book_confirm.grid(row=1, column=2, sticky="W")
             # 以下是隐藏的控件，当导入单词本时被.grid
             self.list_box_words_list = tk.Listbox(self, height=23)
             self.button_parse_list_box_words = tk.Button(text="confirm",
@@ -293,6 +317,7 @@ class Framework(tk.Tk):
                 word_dictionary = translator.get_result_dictionary()
             except Exception as e:
                 self.message.config(text=str(e))
+                raise e
                 return
             input_string = "{0}\n{1}<br/>{2}\n{3}\n{4}\n".format(word_dictionary["word"],
                                                                  word_dictionary["translation"],
