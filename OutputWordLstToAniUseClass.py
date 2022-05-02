@@ -319,11 +319,11 @@ class Framework(tk.Tk):
                 self.message.config(text=str(e))
                 raise e
                 return
-            input_string = "{0}\n{1}<br/>{2}\n{3}\n{4}\n".format(word_dictionary["word"],
-                                                                 word_dictionary["translation"],
-                                                                 word_dictionary["example_chinese"],
-                                                                 word_dictionary["example_english"],
-                                                                 word_dictionary["root"])
+            input_string = "{0}\n{1}<br/><br/>{2}\n<br/>{3}\n{4}\n".format(word_dictionary["word"],
+                                                                           word_dictionary["translation"],
+                                                                           word_dictionary["example_chinese"],
+                                                                           word_dictionary["example_english"],
+                                                                           word_dictionary["root"])
             self.text_show_all.insert("end", input_string)
             self.text_show_all.insert("end", "-----------------\n")
             self.label_vocabulary.config(text=word_dictionary["vocabulary_range"])
