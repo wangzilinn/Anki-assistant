@@ -138,7 +138,7 @@ class Translator:
         # 例句
         try:
             example = soup.find(id='yd-liju').text
-            delete_number = example.index("来自")  # 只需要第一个例句,删掉最后来自哪个字典的部分
+            delete_number = example.index("来自")  # 只需要第一个例句,删掉最后来自哪部字典的部分
             example = example[4:delete_number]
             for char in example:
                 if Methods.is_chinese(char):
@@ -218,6 +218,16 @@ class Framework(tk.Tk):
 
     def __init__(self, *args, **kwargs):
         tk.Tk.__init__(self, *args, **kwargs)
+        self.button_parse_list_box_words = None
+        self.list_box_words_list = None
+        self.button_input_word_book_confirm = None
+        self.__selected_input_word_book_type = None
+        self.output_path = None
+        self.entry_word = None
+        self.label_vocabulary = None
+        self.text_show_all = None
+        self.message = None
+        self.__selected_dictionary_type = None
         self.__configuring_panel_size("normal")
         self.__place_widgets()
 
@@ -318,7 +328,6 @@ class Framework(tk.Tk):
             except Exception as e:
                 self.message.config(text=str(e))
                 raise e
-                return
             input_string = "{0}\n{1}<br/><br/>{2}\n<br/>{3}\n{4}\n".format(word_dictionary["word"],
                                                                            word_dictionary["translation"],
                                                                            word_dictionary["example_chinese"],
