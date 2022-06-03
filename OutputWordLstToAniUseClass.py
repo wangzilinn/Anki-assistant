@@ -1,6 +1,7 @@
 import codecs  # 读写utf-8
 import re
 import tkinter as tk
+from tkinter import messagebox
 import urllib.request
 from tkinter.filedialog import *
 
@@ -230,6 +231,7 @@ class Framework(tk.Tk):
         self.__selected_dictionary_type = None
         self.__configuring_panel_size("normal")
         self.__place_widgets()
+        self.protocol("WM_DELETE_WINDOW", self.__on_closing)
 
     def __configuring_panel_size(self, mode="normal"):
         if mode == "large":
@@ -455,6 +457,12 @@ class Framework(tk.Tk):
     def __command_button_select_output_path(self):
         """点击选择输出路径之后"""
         self.output_path.set(askdirectory())
+
+    def __on_closing(self):
+        """关闭确认"""
+        if tk.messagebox.askokcancel("Quit", "Do you Really want to quit?"):
+            self.destroy()
+
 
 
 window = Framework()
