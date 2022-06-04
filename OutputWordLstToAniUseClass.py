@@ -223,7 +223,7 @@ class Framework(tk.Tk):
         self.list_box_words_list = None
         self.button_input_word_book_confirm = None
         self.__selected_input_word_book_type = None
-        self.output_path = None
+        self.export_path = None
         self.entry_word = None
         self.label_vocabulary = None
         self.text_show_all = None
@@ -254,8 +254,8 @@ class Framework(tk.Tk):
             self.entry_word = tk.Entry()
             self.entry_word.grid(row=0, column=2, columnspan=2, padx=0)
 
-            self.button_word_confirm = tk.Button(text="Confirm", command=self.__command_button_word_confirm)
-            self.button_word_confirm.grid(row=0, column=4)
+            self.button_word_query = tk.Button(text="Query", command=self.__command_button_word_query)
+            self.button_word_query.grid(row=0, column=4)
 
         def place_label_vocabulary():
             # 词汇表（CET4，考研等）
@@ -267,25 +267,25 @@ class Framework(tk.Tk):
             self.text_show_all = tk.Text(width=60, height=28)
             self.text_show_all.grid(row=5, column=0, columnspan=6, rowspan=6, padx=10)
 
-        def place_button_output_part():
+        def place_button_export_part():
             # 将text控件中的文档按单词本格式输出的按钮
-            self.button_output_confirm = tk.Button(text="Output", command=self.__command_button_output_confirm)
-            self.button_output_confirm.grid(row=12, column=3, columnspan=2)
+            self.button_export_confirm = tk.Button(text="Export", command=self.__command_button_output_confirm)
+            self.button_export_confirm.grid(row=12, column=3, columnspan=2)
             # 保存路径字符串
-            self.output_path = tk.StringVar(self)
+            self.export_path = tk.StringVar(self)
             # 路径选择label
-            self.label_select_output_path = tk.Label(text="Select output path:")
-            self.label_select_output_path.grid(row=12, column=0, padx=10)
+            self.label_select_export_path = tk.Label(text="Select export path:")
+            self.label_select_export_path.grid(row=12, column=0, padx=10)
             # 路径选择框
-            self.entry_output_path = tk.Entry(self, textvariable=self.output_path)
-            self.entry_output_path.grid(row=12, column=1)
+            self.entry_export_path = tk.Entry(self, textvariable=self.export_path)
+            self.entry_export_path.grid(row=12, column=1)
             # 打开路径选择的按钮
-            self.button_select_output_path = tk.Button(text="Select", command=self.__command_button_select_output_path)
-            self.button_select_output_path.grid(row=12, column=2, sticky="W")
+            self.button_select_export_path = tk.Button(text="Select", command=self.__command_button_select_output_path)
+            self.button_select_export_path.grid(row=12, column=2, sticky="W")
 
         def place_select_dictionary_part():
             # 选择词典控件
-            self.label_source_choice = tk.Label(text="choice source :")
+            self.label_source_choice = tk.Label(text="Choice source :")
             self.label_source_choice.grid(row=0, column=0, sticky="W", padx=10)
             self.__selected_dictionary_type = tk.StringVar(self)
             self.__selected_dictionary_type.set(Translator.dictionary_type_tuple[1])  # default value
@@ -297,7 +297,7 @@ class Framework(tk.Tk):
         def place_input_word_book_part():
             # 导入单词本控件
             self.__activate_input_word_feature = False  # 是否启动导入单词功能标志位
-            self.label_choice_word_book = tk.Label(text="choice word book :")
+            self.label_choice_word_book = tk.Label(text="Choice word book :")
             self.label_choice_word_book.grid(row=1, column=0, sticky="W", padx=10)
             self.__selected_input_word_book_type = tk.StringVar(self)
             self.__selected_input_word_book_type.set("null")  # default value
@@ -305,19 +305,19 @@ class Framework(tk.Tk):
                                                                          *WordListProcessor.word_list_type_dict,
                                                                          command=self.__command_option_menu_changed)
             self.option_menu_select_input_word_book_type.grid(row=1, column=1, sticky="W")
-            self.button_input_word_book_confirm = tk.Button(text="Off",
+            self.button_input_word_book_confirm = tk.Button(text="Confirm",
                                                             command=self.__command_button_input_word_book_confirm)
             self.button_input_word_book_confirm.grid(row=1, column=2, sticky="W")
             # 以下是隐藏的控件，当导入单词本时被.grid
             self.list_box_words_list = tk.Listbox(self, height=23)
-            self.button_parse_list_box_words = tk.Button(text="confirm",
+            self.button_parse_list_box_words = tk.Button(text="Confirm",
                                                          command=self.__command_button_parse_list_box_words)
 
         place_message()
         place_word_input_part()
         place_label_vocabulary()
         place_text_show_all()
-        place_button_output_part()
+        place_button_export_part()
         place_select_dictionary_part()
         place_input_word_book_part()
 
@@ -327,6 +327,7 @@ class Framework(tk.Tk):
             try:
                 translator = Translator(word, self.__selected_dictionary_type.get())
                 word_dictionary = translator.get_result_dictionary()
+                self.message.config(text="Success!")
             except Exception as e:
                 self.message.config(text=str(e))
                 raise e
@@ -376,8 +377,8 @@ class Framework(tk.Tk):
         else:
             output_confused_words_list_result_to_text_show_all(input_words_list)
 
-    def __command_button_word_confirm(self):
-        input_word = self.entry_word.get()
+    def __command_button_word_query(self):
+        input_word: str = self.entry_word.get()
         # 当没有输入时，点击无效
         if len(input_word) == 0:
             self.message.config(text="No input word detected")
@@ -387,12 +388,12 @@ class Framework(tk.Tk):
             self.message.config(text="The online dictionary type has not been selected")
             return
         self.entry_word.delete(0, len(input_word))  # 清空输入框
-        self.__output_query_result_to_text_show_all(input_word)
+        self.__output_query_result_to_text_show_all(input_word.strip())
 
     # 点击导出按钮之后
     def __command_button_output_confirm(self):
         # 先检测路径是否存在
-        if self.output_path.get() == "":
+        if self.export_path.get() == "":
             self.message.config(text="No output path selected yet")
             return
         # 整理显示框中的字符串
@@ -401,7 +402,7 @@ class Framework(tk.Tk):
         input_str = input_str.replace("\t-----------------\t", "\r\n")
         input_str = input_str[0:-1]  # 去掉最后一个\t
         # 追加写入
-        fo = codecs.open(self.output_path.get() + "/Anki_words.txt", "a+", "utf-8")
+        fo = codecs.open(self.export_path.get() + "/Anki_words.txt", "a+", "utf-8")
         fo.write(input_str)
         fo.close()
         self.message.config(text="Output completed")
@@ -456,13 +457,16 @@ class Framework(tk.Tk):
 
     def __command_button_select_output_path(self):
         """点击选择输出路径之后"""
-        self.output_path.set(askdirectory())
+        self.export_path.set(askdirectory())
 
     def __on_closing(self):
-        """关闭确认"""
-        if tk.messagebox.askokcancel("Quit", "Do you Really want to quit?"):
+        not_export_yet = len(self.text_show_all.get("0.0", "end")) > 1
+        if not_export_yet:
+            """关闭确认"""
+            if tk.messagebox.askokcancel("Quit", "There are still words left to export\nDo you Really want to quit?"):
+                self.destroy()
+        else:
             self.destroy()
-
 
 
 window = Framework()
